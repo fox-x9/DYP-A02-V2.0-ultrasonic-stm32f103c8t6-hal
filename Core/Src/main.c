@@ -47,6 +47,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 static uint8_t  ultra_rx_byte;   /* USART1 单字节接收缓冲 */
 static char     u2_tx_buf[32];   /* USART2 发送缓冲 */
+static uint32_t led_tick = 0;    /* LED闪烁计数器 */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -123,6 +124,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    /* ---- LED闪烁: 每500ms翻转一次 ---- */
+    led_tick++;
+    if (led_tick >= 50) {
+      led_tick = 0;
+      HAL_GPIO_TogglePin(led_GPIO_Port, led_Pin);
+    }
 
     /* 检查是否有新的超声波数据 */
     if (g_ultra.data_ready) {
@@ -251,6 +259,7 @@ static void MX_USART2_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
 
   /* USER CODE END MX_GPIO_Init_1 */
@@ -259,6 +268,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(led_GPIO_Port, led_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : led_Pin */
+  GPIO_InitStruct.Pin = led_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(led_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
