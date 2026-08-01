@@ -125,12 +125,12 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    /* ---- LED闪烁: 每500ms翻转一次 ---- */
-    led_tick++;
-    if (led_tick >= 50) {
-      led_tick = 0;
-      HAL_GPIO_TogglePin(led_GPIO_Port, led_Pin);
-    }
+    /* ---- 发送触发字节 (串口任意数据即可触发测距) ---- */
+    uint8_t trigger = 0x00;
+    HAL_UART_Transmit(&huart1, &trigger, 1, 10);
+
+    /* 等待传感器响应 (触发后45~60ms输出一帧数据) */
+    HAL_Delay(60);
 
     /* 检查是否有新的超声波数据 */
     if (g_ultra.data_ready) {
@@ -142,7 +142,15 @@ int main(void)
       HAL_UART_Transmit(&huart2, (uint8_t *)u2_tx_buf, len, 100);
     }
 
-    HAL_Delay(10);  /* 降低主循环频率 */
+    /* ---- LED闪烁: 约500ms翻转一次 (5周期 × 100ms) ---- */
+    led_tick++;
+    if (led_tick >= 5) {
+      led_tick = 0;
+      HAL_GPIO_TogglePin(led_GPIO_Port, led_Pin);
+    }
+
+    /* 保证触发间隔 > 70ms (60ms等待 + 40ms缓冲 = 100ms周期) */
+    HAL_Delay(40);
   }
   /* USER CODE END 3 */
 }
